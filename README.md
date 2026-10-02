@@ -1,6 +1,4 @@
-# Masa New Versions Behavior — Minecraft 1.12.2
-
-A LiteLoader companion mod that fixes Tweakeroo block placement around liquids in Minecraft 1.12.2.
+# Masa-PlacementFix
 
 ## What it does
 
