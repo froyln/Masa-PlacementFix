@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "dev.masabehavior.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "mixins.masaplacement.refmap.json",
+  "client": [
+    "PlacementTweaksMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
