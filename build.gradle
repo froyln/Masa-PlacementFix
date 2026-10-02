@@ -1,0 +1,75 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.minecraftforge.net' }
+        maven { url = 'https://repo.spongepowered.org/maven' }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.liteloader'
+apply plugin: 'org.spongepowered.mixin'
+
+group = 'dev.masabehavior'
+version = '0.1.0'
+
+sourceCompatibility = targetCompatibility = '1.8'
+
+minecraft {
+    version = '1.12.2'
+    mappings = 'stable_39'
+}
+
+def instanceModsDir = file(project.findProperty('instanceModsDir') ?: "${System.getProperty('user.home')}/.local/share/PrismLauncher/instances/1.12.2-ai-masabehavior/minecraft/mods/1.12.2")
+def tweakerooJar = new File(instanceModsDir, 'tweakeroo-liteloader-1.12.2-0.31.0.litemod')
+def malilibJar = new File(instanceModsDir, 'malilib-liteloader-1.12.2-0.54.0.litemod')
+
+if (!tweakerooJar.isFile() || !malilibJar.isFile()) {
+    throw new GradleException("Expected Tweakeroo 0.31.0 and MaLiLib 0.54.0 in ${instanceModsDir}; set -PinstanceModsDir if needed")
+}
+
+def stageForDeobfuscation = { File inputFile, String artifact, String version ->
+    def path = file("$buildDir/local-maven/dev/masa/$artifact/$version")
+    path.mkdirs()
+    copy {
+        from inputFile
+        into path
+        rename { "${artifact}-${version}.jar" }
+    }
+    new File(path, "${artifact}-${version}.pom").text = """<project><modelVersion>4.0.0</modelVersion><groupId>dev.masa</groupId><artifactId>${artifact}</artifactId><version>${version}</version></project>"""
+}
+stageForDeobfuscation(tweakerooJar, 'tweakeroo', '0.31.0')
+stageForDeobfuscation(malilibJar, 'malilib', '0.54.0')
+
+repositories {
+    maven { url uri("$buildDir/local-maven") }
+}
+
+dependencies {
+    deobfCompile 'dev.masa:tweakeroo:0.31.0'
+    deobfCompile 'dev.masa:malilib:0.54.0'
+}
+
+sourceSets.main.refMap = 'mixins.masaplacement.refmap.json'
+
+mixin {
+    defaultObfuscationEnv notch
+}
+
+litemod {
+    json {
+        name = 'masaplacementfix'
+        displayName = 'Masa-PlacementFix'
+        mcversion = '1.12.2'
+        dependsOn = ['tweakeroo', 'malilib']
+        mixinConfigs += 'mixins.masaplacement.json'
+    }
+}
+
+jar {
+    archiveName = 'Masa-PlacementFix.litemod'
+    from litemod.outputs
+}
